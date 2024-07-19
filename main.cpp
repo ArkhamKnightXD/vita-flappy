@@ -133,6 +133,7 @@ int loadHighScore()
     return highScore;
 }
 
+//Save score not working in original hardware.
 void saveScore()
 {
     std::ofstream highScores("high-score.txt");
