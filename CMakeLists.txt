@@ -61,6 +61,7 @@ elseif(VITA)
 		FILE res/sprites/pipe-green.png pipe-green.png 
 		FILE res/sprites/yellow-bird.png yellow-bird.png 
 		FILE res/sprites/yellowbird-midflap.png yellowbird-midflap.png 
+		FILE res/high-score.txt high-score.txt 
 	)
 endif()
 
@@ -89,4 +90,5 @@ file(COPY res/sprites/pipe-green-180.png DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY res/sprites/pipe-green.png DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY res/sprites/yellow-bird.png DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY res/sprites/yellowbird-midflap.png DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY res/high-score.txt DESTINATION ${CMAKE_BINARY_DIR})
 
