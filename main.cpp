@@ -17,6 +17,10 @@ bool isGameOver;
 bool isGamePaused;
 float startGameTimer;
 
+bool shouldRotateUp = false;
+float downRotationTimer = 0;
+float upRotationTimer = 0;
+
 float gravity = 0;
 
 Mix_Chunk *gamePausedSound = nullptr;
@@ -190,7 +194,7 @@ void handleEvents(float deltaTime)
             exit(0);
         }
 
-        if (event.type == SDL_CONTROLLERBUTTONDOWN && event.cbutton.button == SDL_CONTROLLER_BUTTON_START)
+        if (event.type == SDL_CONTROLLERBUTTONDOWN && event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
         {
             isGamePaused = !isGamePaused;
             Mix_PlayChannel(-1, gamePausedSound, 0);
@@ -199,6 +203,12 @@ void handleEvents(float deltaTime)
         if (!isGameOver && event.type == SDL_CONTROLLERBUTTONDOWN && event.cbutton.button == SDL_CONTROLLER_BUTTON_A)
         {
             gravity = player.impulse * deltaTime;
+
+            shouldRotateUp = true;
+            upRotationTimer = 1;
+            downRotationTimer = 0;
+            initialAngle = -20;
+
             Mix_PlayChannel(-1, flapSound, 0);
         }
 
@@ -345,7 +355,7 @@ void renderSprite(Sprite sprite)
     SDL_RenderCopy(renderer, sprite.texture, NULL, &sprite.textureBounds);
 }
 
-void render()
+void render(float deltaTime)
 {
     backgroundSprite.textureBounds.x = 0;
     renderSprite(backgroundSprite);
@@ -424,7 +434,46 @@ void render()
         renderSprite(startGameSprite);
     }
 
-    renderSprite(player.sprite);
+    SDL_RenderCopyEx(renderer, birdSprites.texture, &birdsBounds, &player.sprite.textureBounds, initialAngle, NULL, SDL_FLIP_NONE);
+
+    if (startGameTimer > 1)
+    {
+        downRotationTimer += deltaTime;
+
+        if (downRotationTimer < 0.5f)
+        {
+            SDL_RenderCopyEx(renderer, birdSprites.texture, &birdsBounds, &player.sprite.textureBounds, initialAngle, NULL, SDL_FLIP_NONE);
+        }
+
+        if (shouldRotateUp)
+        {
+            if (upRotationTimer > 0)
+            {
+                upRotationTimer -= deltaTime;
+            }
+
+            if (upRotationTimer <= 0)
+            {
+                shouldRotateUp = false;
+            }
+
+            SDL_RenderCopyEx(renderer, birdSprites.texture, &birdsBounds, &player.sprite.textureBounds, initialAngle, NULL, SDL_FLIP_NONE);
+        }
+
+        if (downRotationTimer > 0.5f)
+        {
+            if (initialAngle <= 90 && !isGameOver && !isGamePaused)
+            {
+                initialAngle += 2;
+            }
+
+            SDL_RenderCopyEx(renderer, birdSprites.texture, &birdsBounds, &player.sprite.textureBounds, initialAngle, NULL, SDL_FLIP_NONE);
+        }
+    }
+    else
+    {
+        SDL_RenderCopyEx(renderer, birdSprites.texture, &birdsBounds, &player.sprite.textureBounds, initialAngle, NULL, SDL_FLIP_NONE);
+    }
 
     SDL_RenderPresent(renderer);
 }
@@ -544,6 +593,15 @@ int main(int argc, char *args[])
 
     loadNumbersSprites();
 
+    birdSprites = loadSprite("yellow-bird.png", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+
+    birdsBounds = {0, 0, birdSprites.textureBounds.w / 3, birdSprites.textureBounds.h};
+
+    int framesCounter = 0;
+    int framesSpeed = 6;
+
+    int currentFrame = 0;
+
     Uint32 previousFrameTime = SDL_GetTicks();
     Uint32 currentFrameTime = previousFrameTime;
     float deltaTime = 0.0f;
@@ -562,9 +620,23 @@ int main(int argc, char *args[])
 
         if (!isGameOver && !isGamePaused)
         {
+
+            framesCounter++;
+
+            if (framesCounter >= (60 / framesSpeed))
+            {
+                framesCounter = 0;
+                currentFrame++;
+
+                if (currentFrame > 2)
+                    currentFrame = 0;
+
+                birdsBounds.x = currentFrame * birdsBounds.w;
+            }
+            
             update(deltaTime);
         }
 
-        render();
+        render(deltaTime);
     }
 }
