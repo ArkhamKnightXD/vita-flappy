@@ -5,6 +5,8 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include "sdl_starter.h"
+#include "sdl_assets_loader.h"
 
 const int SCREEN_WIDTH = 960;
 const int SCREEN_HEIGHT = 544;
@@ -28,12 +30,6 @@ Mix_Chunk *flapSound = nullptr;
 Mix_Chunk *pauseSound = nullptr;
 Mix_Chunk *dieSound = nullptr;
 Mix_Chunk *crossPipeSound = nullptr;
-
-typedef struct
-{
-    SDL_Texture *texture;
-    SDL_Rect textureBounds;
-} Sprite;
 
 SDL_Rect birdsBounds;
 Sprite birdSprites;
@@ -243,35 +239,6 @@ void updateTextureText(SDL_Texture *&texture, const char *text)
     }
 
     SDL_FreeSurface(surface);
-}
-
-Sprite loadSprite(const char *file, int positionX, int positionY)
-{
-    SDL_Rect textureBounds = {positionX, positionY, 0, 0};
-
-    SDL_Texture *texture = IMG_LoadTexture(renderer, file);
-
-    if (texture != nullptr)
-    {
-        SDL_QueryTexture(texture, NULL, NULL, &textureBounds.w, &textureBounds.h);
-    }
-
-    Sprite sprite = {texture, textureBounds};
-
-    return sprite;
-}
-
-Mix_Chunk *loadSound(const char *p_filePath)
-{
-    Mix_Chunk *sound = nullptr;
-
-    sound = Mix_LoadWAV(p_filePath);
-    if (sound == nullptr)
-    {
-        printf("Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError());
-    }
-
-    return sound;
 }
 
 void update(float deltaTime)
@@ -486,7 +453,7 @@ void loadNumbersSprites()
     {
         std::string completeString = std::to_string(i) + fileExtension;
 
-        Sprite numberSprite = loadSprite(completeString.c_str(), SCREEN_WIDTH / 2, 30);
+        Sprite numberSprite = loadSprite(renderer, completeString.c_str(), SCREEN_WIDTH / 2, 30);
 
         numbers.push_back(numberSprite);
         numberTens.push_back(numberSprite);
@@ -498,26 +465,11 @@ void loadNumbersSprites()
 
 int main(int argc, char *args[])
 {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) < 0)
-    {
-        std::cout << "SDL crashed. Error: " << SDL_GetError();
-        return 1;
-    }
-
     window = SDL_CreateWindow("My Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (window == nullptr)
-    {
-        std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
-        SDL_Quit();
-        return 1;
-    }
-
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (renderer == nullptr)
+   
+    if (startSDL(window, renderer) > 0)
     {
-        std::cerr << "Failed to create renderer: " << SDL_GetError() << std::endl;
-        SDL_DestroyWindow(window);
-        SDL_Quit();
         return 1;
     }
 
@@ -533,23 +485,6 @@ int main(int argc, char *args[])
             printf("Unable to open game controller! SDL Error: %s\n", SDL_GetError());
             return -1;
         }
-    }
-
-    if (!IMG_Init(IMG_INIT_PNG))
-    {
-        std::cout << "SDL_image crashed. Error: " << SDL_GetError();
-        return 1;
-    }
-
-    // Initialize SDL_mixer
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-    {
-        printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
-    }
-
-    if (TTF_Init() == -1)
-    {
-        return 1;
     }
 
     fontSquare = TTF_OpenFont("square_sans_serif_7.ttf", 36);
@@ -568,13 +503,13 @@ int main(int argc, char *args[])
 
     highScore = loadHighScore();
 
-    upPipeSprite = loadSprite("pipe-green-180.png", SCREEN_WIDTH / 2, -220);
-    downPipeSprite = loadSprite("pipe-green.png", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    upPipeSprite = loadSprite(renderer, "pipe-green-180.png", SCREEN_WIDTH / 2, -220);
+    downPipeSprite = loadSprite(renderer, "pipe-green.png", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
-    startGameSprite = loadSprite("message.png", SCREEN_WIDTH / 2 - 75, 103);
-    backgroundSprite = loadSprite("background-day.png", 0, 0);
+    startGameSprite = loadSprite(renderer, "message.png", SCREEN_WIDTH / 2 - 75, 103);
+    backgroundSprite = loadSprite(renderer, "background-day.png", 0, 0);
 
-    groundSprite = loadSprite("base.png", 0, 0);
+    groundSprite = loadSprite(renderer, "base.png", 0, 0);
 
     groundYPosition = SCREEN_HEIGHT - groundSprite.textureBounds.h;
 
@@ -587,13 +522,13 @@ int main(int argc, char *args[])
     groundPositions.push_back({(float)groundSprite.textureBounds.w * 2, groundYPosition});
     groundPositions.push_back({(float)groundSprite.textureBounds.w * 3, groundYPosition});
 
-    playerSprite = loadSprite("yellowbird-midflap.png", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    playerSprite = loadSprite(renderer, "yellowbird-midflap.png", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
     player = Player{SCREEN_HEIGHT / 2, playerSprite, -10000, 400};
 
     loadNumbersSprites();
 
-    birdSprites = loadSprite("yellow-bird.png", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    birdSprites = loadSprite(renderer, "yellow-bird.png", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
     birdsBounds = {0, 0, birdSprites.textureBounds.w / 3, birdSprites.textureBounds.h};
 
@@ -611,16 +546,13 @@ int main(int argc, char *args[])
     while (true)
     {
         currentFrameTime = SDL_GetTicks();
-
         deltaTime = (currentFrameTime - previousFrameTime) / 1000.0f;
-
         previousFrameTime = currentFrameTime;
 
         handleEvents(deltaTime);
 
         if (!isGameOver && !isGamePaused)
         {
-
             framesCounter++;
 
             if (framesCounter >= (60 / framesSpeed))
