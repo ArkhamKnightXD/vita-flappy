@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <psp2/touch.h>
 #include "sdl_starter.h"
 #include "sdl_assets_loader.h"
 
@@ -181,6 +182,11 @@ void quitGame()
 void handleEvents(float deltaTime)
 {
     SDL_Event event;
+    // touch variables.
+    SceTouchData frontTouch;
+    SceTouchData backTouch;
+    int isFrontTouched = 0;
+    int isBackTouched = 0;
 
     while (SDL_PollEvent(&event)) {
 
@@ -211,6 +217,35 @@ void handleEvents(float deltaTime)
         else if (isGameOver && event.type == SDL_CONTROLLERBUTTONDOWN && event.cbutton.button == SDL_CONTROLLER_BUTTON_A)
         {
             resetGame(player);
+        }
+
+        if (sceTouchPeek(SCE_TOUCH_PORT_FRONT, &frontTouch, 1) > 0  && frontTouch.reportNum > 0) 
+        {
+            isFrontTouched = 1;
+        }
+
+        if (sceTouchPeek(SCE_TOUCH_PORT_BACK, &backTouch, 1) > 0 && backTouch.reportNum > 0) 
+        {
+            isBackTouched = 1;
+        }
+
+        if (isFrontTouched || isBackTouched) 
+        {
+            if (!isGameOver) 
+            {
+                gravity = player.impulse * deltaTime;
+
+                shouldRotateUp = true;
+                upRotationTimer = 1;
+                downRotationTimer = 0;
+                initialAngle = -20;
+
+                Mix_PlayChannel(-1, flapSound, 0);
+            } 
+            else 
+            {
+                resetGame(player);
+            }
         }
     }
 }
@@ -486,6 +521,10 @@ int main(int argc, char *args[])
             return -1;
         }
     }
+
+    // initialize touch of the front screen.
+    sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
+    sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
     fontSquare = TTF_OpenFont("square_sans_serif_7.ttf", 36);
 
