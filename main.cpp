@@ -123,7 +123,7 @@ int loadHighScore()
 {
     std::string highScoreText;
 
-    std::ifstream highScores("high-score.txt");
+    std::ifstream highScores("ux0:data/FLAPPY001/high-score.txt");
 
     getline(highScores, highScoreText);
 
@@ -137,7 +137,7 @@ int loadHighScore()
 //Save score not working in original hardware.
 void saveScore()
 {
-    std::ofstream highScores("high-score.txt");
+    std::ofstream highScores("ux0:data/FLAPPY001/high-score.txt");
 
     std::string scoreString = std::to_string(score);
     highScores << scoreString;
@@ -521,6 +521,8 @@ int main(int argc, char *args[])
             return -1;
         }
     }
+
+    saveScore();
 
     // initialize touch of the front screen.
     sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
