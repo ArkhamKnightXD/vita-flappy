@@ -119,11 +119,38 @@ void generatePipes()
     lastPipeSpawnTime = 0;
 }
 
+void saveScore()
+{
+    //need to save the save file in this path, cuz the folder app is read-only, and for that I can't overwrite any file.
+    std::ofstream highScores("ux0:data/high-score.txt");
+
+    std::string scoreString = std::to_string(score);
+    highScores << scoreString;
+
+    highScores.close();
+}
+
 int loadHighScore()
 {
     std::string highScoreText;
 
-    std::ifstream highScores("ux0:data/FLAPPY001/high-score.txt");
+    std::ifstream highScores("ux0:data/high-score.txt");
+
+    if (!highScores.is_open())
+    {
+        saveScore();
+
+        std::ifstream auxHighScores("ux0:data/high-score.txt");
+
+        getline(auxHighScores, highScoreText);
+
+        // Close the file
+        highScores.close();
+
+        int highScore = stoi(highScoreText);
+
+        return highScore;
+    }
 
     getline(highScores, highScoreText);
 
@@ -132,17 +159,6 @@ int loadHighScore()
     int highScore = stoi(highScoreText);
 
     return highScore;
-}
-
-//Save score not working in original hardware.
-void saveScore()
-{
-    std::ofstream highScores("ux0:data/FLAPPY001/high-score.txt");
-
-    std::string scoreString = std::to_string(score);
-    highScores << scoreString;
-
-    highScores.close();
 }
 
 void resetGame(Player &player)
@@ -521,8 +537,6 @@ int main(int argc, char *args[])
             return -1;
         }
     }
-
-    saveScore();
 
     // initialize touch of the front screen.
     sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
