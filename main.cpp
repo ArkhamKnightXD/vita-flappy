@@ -200,9 +200,11 @@ void handleEvents(float deltaTime)
     SDL_Event event;
     // touch variables.
     SceTouchData frontTouch;
-    SceTouchData backTouch;
     int isFrontTouched = 0;
-    int isBackTouched = 0;
+
+//Removing backTouch support, cuz the front touch is better for a flappy bird clone. I'm gonna let this commented for future references.
+    // SceTouchData backTouch;
+    // int isBackTouched = 0;
 
     while (SDL_PollEvent(&event)) {
 
@@ -240,12 +242,12 @@ void handleEvents(float deltaTime)
             isFrontTouched = 1;
         }
 
-        if (sceTouchPeek(SCE_TOUCH_PORT_BACK, &backTouch, 1) > 0 && backTouch.reportNum > 0) 
-        {
-            isBackTouched = 1;
-        }
+        // if (sceTouchPeek(SCE_TOUCH_PORT_BACK, &backTouch, 1) > 0 && backTouch.reportNum > 0) 
+        // {
+        //     isBackTouched = 1;
+        // }
 
-        if (isFrontTouched || isBackTouched) 
+        if (isFrontTouched /*|| isBackTouched*/) 
         {
             if (!isGameOver) 
             {
@@ -264,32 +266,6 @@ void handleEvents(float deltaTime)
             }
         }
     }
-}
-
-void updateTextureText(SDL_Texture *&texture, const char *text)
-{
-    if (fontSquare == nullptr)
-    {
-        printf("TTF_OpenFont fontSquare: %s\n", TTF_GetError());
-    }
-
-    SDL_Surface *surface = TTF_RenderUTF8_Blended(fontSquare, text, fontColor);
-    if (surface == nullptr)
-    {
-        printf("TTF_OpenFont: %s\n", TTF_GetError());
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to create text surface! SDL Error: %s\n", SDL_GetError());
-        exit(3);
-    }
-
-    SDL_DestroyTexture(texture);
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (texture == nullptr)
-    {
-        printf("TTF_OpenFont: %s\n", TTF_GetError());
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to create texture from surface! SDL Error: %s\n", SDL_GetError());
-    }
-
-    SDL_FreeSurface(surface);
 }
 
 void update(float deltaTime)
@@ -544,7 +520,7 @@ int main(int argc, char *args[])
 
     fontSquare = TTF_OpenFont("square_sans_serif_7.ttf", 36);
 
-    updateTextureText(highScoreTexture, "High Score: ");
+    updateTextureText(highScoreTexture, "High Score: ", fontSquare, renderer);
 
     SDL_QueryTexture(highScoreTexture, NULL, NULL, &highScoreBounds.w, &highScoreBounds.h);
     highScoreBounds.x = 20;
