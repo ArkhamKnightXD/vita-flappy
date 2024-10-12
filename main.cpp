@@ -1,9 +1,4 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_ttf.h>
 #include <vector>
-#include <iostream>
 #include <fstream>
 #include <psp2/touch.h>
 #include "sdl_starter.h"
@@ -219,6 +214,7 @@ void handleEvents(float deltaTime)
             isGamePaused = !isGamePaused;
             Mix_PlayChannel(-1, gamePausedSound, 0);
         }
+        
 
         if (!isGameOver && event.type == SDL_CONTROLLERBUTTONDOWN && event.cbutton.button == SDL_CONTROLLER_BUTTON_A)
         {
@@ -344,7 +340,7 @@ void update(float deltaTime)
     }
 }
 
-void renderSprite(Sprite sprite)
+void renderSprite(Sprite &sprite)
 {
     SDL_RenderCopy(renderer, sprite.texture, NULL, &sprite.textureBounds);
 }
@@ -375,7 +371,7 @@ void render(float deltaTime)
     groundSprite.textureBounds.x = groundSprite.textureBounds.w * 3;
     renderSprite(groundSprite);
 
-    for (Pipe pipe : pipes)
+    for (Pipe &pipe : pipes)
     {
         if (!pipe.isDestroyed)
         {
@@ -417,7 +413,7 @@ void render(float deltaTime)
 
     SDL_RenderCopy(renderer, highScoreTexture, NULL, &highScoreBounds);
 
-    for (Vector2 groundPosition : groundPositions)
+    for (Vector2 &groundPosition : groundPositions)
     {
         groundSprite.textureBounds.x = groundPosition.x;
         renderSprite(groundSprite);
@@ -476,6 +472,12 @@ void loadNumbersSprites()
 {
     std::string fileExtension = ".png";
 
+    numbers.reserve(10);
+    numberTens.reserve(10);
+
+    highScoreNumbers.reserve(10);
+    highScoreNumberTens.reserve(10);
+
     for (int i = 0; i < 10; i++)
     {
         std::string completeString = std::to_string(i) + fileExtension;
@@ -500,20 +502,8 @@ int main(int argc, char *args[])
         return 1;
     }
 
-    if (SDL_NumJoysticks() < 1) {
-        printf("No game controllers connected!\n");
-        return -1;
-    } 
-    else {
-
-        controller = SDL_GameControllerOpen(0);
-        if (controller == NULL) {
-
-            printf("Unable to open game controller! SDL Error: %s\n", SDL_GetError());
-            return -1;
-        }
-    }
-
+    controller = SDL_GameControllerOpen(0);
+       
     // initialize touch of the front screen.
     sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
     sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
